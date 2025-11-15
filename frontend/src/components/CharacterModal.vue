@@ -48,7 +48,7 @@
 </template>
 
 <script>
-// Import Modal JS from bootstrap
+
 import { Modal } from 'bootstrap'; 
 
 export default {
@@ -87,12 +87,11 @@ export default {
     },
   },
   watch: {
-    // Watch the 'show' prop
     show(newValue) {
       if (newValue) {
-        if (this.character) { // Editing mode
+        if (this.character) { 
           this.formData = { ...this.character };
-        } else { // Creating mode
+        } else { 
           this.resetForm();
         }
         this.modalInstance.show();
@@ -102,7 +101,7 @@ export default {
     },
   },
   mounted() {
-    // Initialize the Bootstrap Modal
+    
     this.modalInstance = new Modal(this.$refs.characterModal, {
       keyboard: false,
       backdrop: 'static',

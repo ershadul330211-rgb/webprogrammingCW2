@@ -8,8 +8,7 @@ from .models import Character, Quote
 @require_http_methods(["GET", "POST"])
 def character_list_create(request):
     """
-    GET: Returns a list of all characters.
-    POST: Creates a new character.
+    Handles GET (all) and POST (create) for Characters.
     """
     if request.method == 'GET':
         characters = Character.objects.all().order_by('name')
@@ -34,8 +33,7 @@ def character_list_create(request):
 @require_http_methods(["PUT", "DELETE"])
 def character_detail_update_delete(request, pk):
     """
-    PUT: Updates a single character.
-    DELETE: Deletes a single character.
+    Handles updating (PUT) and deleting (DELETE) a single Character.
     """
     try:
         character = Character.objects.get(pk=pk)
@@ -58,13 +56,13 @@ def character_detail_update_delete(request, pk):
 
     elif request.method == 'DELETE':
         character.delete()
-        return HttpResponse(status=204) # 204 No Content
+        return HttpResponse(status=204) 
 
 @csrf_exempt
 @require_http_methods(["POST"]) 
 def quote_create(request):
     """
-    POST: Creates a new quote for a specific character.
+    Handles POST requests to create a new Quote.
     """
     try:
         data = json.loads(request.body)
@@ -73,7 +71,7 @@ def quote_create(request):
             character=character,
             text=data['text'],
         )
-        character.refresh_from_db() # Get the updated list of quotes
+        character.refresh_from_db() 
         return JsonResponse(character.to_dict(), status=201)
     except Character.DoesNotExist:
         return JsonResponse({'error': 'Character not found'}, status=404)
@@ -84,8 +82,7 @@ def quote_create(request):
 @require_http_methods(["PUT", "DELETE"])
 def quote_detail_update_delete(request, pk):
     """
-    PUT: Updates a single quote.
-    DELETE: Deletes a single quote.
+    Handles updating and deleting a single Quote.
     """
     try:
         quote = Quote.objects.get(pk=pk)
@@ -98,13 +95,13 @@ def quote_detail_update_delete(request, pk):
             quote.text = data.get('text', quote.text)
             quote.save()
             
-            quote.character.refresh_from_db() # Get updated parent
+            quote.character.refresh_from_db() 
             return JsonResponse(quote.character.to_dict())
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
 
     elif request.method == 'DELETE':
-        character = quote.character # Get parent character
+        character = quote.character 
         quote.delete()
-        character.refresh_from_db() # Get updated parent
+        character.refresh_from_db() 
         return JsonResponse(character.to_dict())

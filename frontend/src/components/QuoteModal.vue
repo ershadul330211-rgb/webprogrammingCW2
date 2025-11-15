@@ -28,7 +28,6 @@
 </template>
 
 <script>
-// Import Modal JS from bootstrap
 import { Modal } from 'bootstrap';
 
 export default {
@@ -65,9 +64,9 @@ export default {
   watch: {
     show(newValue) {
       if (newValue) {
-        if (this.quote) { // Editing
+        if (this.quote) { 
           this.formData = { ...this.quote };
-        } else { // Creating
+        } else { 
           this.resetForm();
         }
         this.modalInstance.show();
@@ -77,7 +76,6 @@ export default {
     },
   },
   mounted() {
-    // Initialize the Bootstrap Modal
     this.modalInstance = new Modal(this.$refs.quoteModal, {
       keyboard: false,
       backdrop: 'static',

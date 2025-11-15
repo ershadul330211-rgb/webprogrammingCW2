@@ -8,20 +8,20 @@
     </header>
 
     <CharacterAccordion
-      :key="characterListKey" 
+      :key="accordionKey" 
       :characters="characters"
       @edit-character="openCharacterModal"
-      @delete-character="handleDeleteCharacter"
+      @delete-character="DeleteCharacter"
       @add-quote="openQuoteModal"
       @edit-quote="openQuoteModal"
-      @delete-quote="handleDeleteQuote"
+      @delete-quote="DeleteQuote"
     />
 
     <CharacterModal
       :show="showCharacterModal"
       :character="selectedCharacter"
       @close="showCharacterModal = false"
-      @save="handleSaveCharacter"
+      @save="SaveCharacter"
     />
 
     <QuoteModal
@@ -29,18 +29,16 @@
       :quote="selectedQuote"
       :characterId="selectedCharacterId"
       @close="showQuoteModal = false"
-      @save="handleSaveQuote"
+      @save="SaveQuote"
     />
   </div>
 </template>
 
 <script>
-// Import child components
 import CharacterAccordion from './components/CharacterAccordion.vue';
 import CharacterModal from './components/CharacterModal.vue';
 import QuoteModal from './components/QuoteModal.vue';
 
-// Define the base URL for the API
 const API_URL = 'http://127.0.0.1:8000/api';
 
 export default {
@@ -58,30 +56,24 @@ export default {
       showQuoteModal: false,
       selectedCharacter: null, // For editing a character
       selectedQuote: null, // For editing a quote
-      selectedCharacterId: null, // For creating a new quote
-      characterListKey: 0, // <-- THIS IS THE FIX (Part 2)
+      selectedCharacterId: null, // For adding a quote
+      accordionKey: 0, 
     };
   },
   methods: {
-    /**
-     * Forces the <CharacterAccordion> component to re-render itself.
-     * This is the fix for the Bootstrap/Vue reactivity bug.
-     */
-    forceRerender() {
-      this.characterListKey += 1;
+    // Force the accordian to update by changing its key
+    refreshAccordion() {
+      this.accordionKey += 1;
     },
 
-    /**
-     * Helper function to find and replace a character in the local data.
-     */
-    updateCharacterInList(updatedCharacter) {
+    // Finds and updates a character in the local list
+    updateList(updatedCharacter) {
         const index = this.characters.findIndex(c => c.id === updatedCharacter.id);
         if (index !== -1) {
             this.characters.splice(index, 1, updatedCharacter);
         }
     },
 
-    // --- Data Fetching (GET) ---
     async fetchCharacters() {
       try {
         const response = await fetch(`${API_URL}/characters/`);
@@ -91,7 +83,6 @@ export default {
       }
     },
 
-    // --- Modal Triggers ---
     openCharacterModal(character) {
       this.selectedCharacter = character ? { ...character } : null; // Use copy
       this.showCharacterModal = true;
@@ -108,8 +99,7 @@ export default {
       this.showQuoteModal = true;
     },
 
-    // --- API Call: Save/Update Character (POST / PUT) ---
-    async handleSaveCharacter(characterData) {
+    async SaveCharacter(characterData) {
       const isUpdating = !!characterData.id;
       const url = isUpdating
         ? `${API_URL}/characters/${characterData.id}/`
@@ -125,33 +115,30 @@ export default {
         
         this.showCharacterModal = false; // Close modal
         
-        // Wait for modal to close, then update data & force re-render
         setTimeout(async () => {
-          await this.fetchCharacters(); // Re-fetch all
-          this.forceRerender(); // Force UI update
-        }, 300); // 300ms is a safe delay for the animation
+          await this.fetchCharacters();
+          this.refreshAccordion(); 
+        }, 300);
 
       } catch (error) {
         console.error('Error saving character:', error);
       }
     },
 
-    // --- API Call: Delete Character (DELETE) ---
-    async handleDeleteCharacter(characterId) {
+    async DeleteCharacter(characterId) {
       if (!confirm('Are you sure you want to delete this character?')) return;
 
       try {
         await fetch(`${API_URL}/characters/${characterId}/`, { method: 'DELETE' });
         // Update list locally and force re-render
         this.characters = this.characters.filter(c => c.id !== characterId);
-        this.forceRerender();
+        this.refreshAccordion();
       } catch (error) {
         console.error('Error deleting character:', error);
       }
     },
 
-    // --- API Call: Save/Update Quote (POST / PUT) ---
-    async handleSaveQuote(quoteData) {
+    async SaveQuote(quoteData) {
       const isUpdating = !!quoteData.id;
       const url = isUpdating 
         ? `${API_URL}/quotes/${quoteData.id}/` 
@@ -174,8 +161,8 @@ export default {
 
         // Wait for modal to close, then update data & force re-render
         setTimeout(() => {
-          this.updateCharacterInList(updatedCharacter); 
-          this.forceRerender();
+          this.updateList(updatedCharacter); 
+          this.refreshAccordion();
         }, 300);
 
       } catch (error) {
@@ -183,8 +170,7 @@ export default {
       }
     },
 
-    // --- API Call: Delete Quote (DELETE) ---
-    async handleDeleteQuote(quoteId) {
+    async DeleteQuote(quoteId) {
       if (!confirm('Are you sure you want to delete this quote?')) return;
 
       try {
@@ -193,25 +179,22 @@ export default {
         });
         
         const updatedCharacter = await response.json();
-        this.updateCharacterInList(updatedCharacter);
-        this.forceRerender();
+        this.updateList(updatedCharacter);
+        this.refreshAccordion();
       } catch (error) {
         console.error('Error deleting quote:', error);
       }
     },
   },
   mounted() {
-    // Fetch initial data when the component loads
     this.fetchCharacters();
   },
 };
 </script>
 
 <style>
-/* Import Bootstrap Icons */
 @import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css");
 
-/* Small style tweak for quotes */
 .blockquote {
   font-size: 1rem;
 }
